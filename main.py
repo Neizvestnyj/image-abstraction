@@ -5,7 +5,7 @@ import cv2 as cv
 
 def main():
 
-    file = 'spring_cropped.jpeg'
+    file = 'spring.jpeg'
 
     k = 15  # number of colours to quantize image to
     dim = (3000, 3000, 3)  # shape of abstract image
