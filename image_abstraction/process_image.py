@@ -7,10 +7,19 @@ from time import perf_counter
 
 logging.basicConfig(level=logging.INFO)
 
+# returns cv2 image from file and resizes to have max(width,height) < max_dim
+def load_image(file, max_dim):
 
-def load_image(file):
-    img = cv.imread(f'images/{file}')
-    logging.info(f'Image loaded with shape {img.shape}')
+    img = cv.imread(f'img/{file}')
+    logging.info(f'Image loaded with dimensions: {img.shape}')
+
+    if max(img.shape) > max_dim:
+        h, w, _ = img.shape
+        scale = (max(img.shape) - max_dim) / max(img.shape)
+        dim = (int(w * scale), int(h * scale))
+        img = cv.resize(img, dim)
+        logging.info(f'Image resized to dimensions: {img.shape}')
+
     return img
 
 # Uses kmeans algorithm to reduce image to 'k' number of colours
