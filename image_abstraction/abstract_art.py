@@ -13,16 +13,13 @@ BACKGROUND_COLOUR = (137, 142, 140)  # #898E8C - Neutral Gray
 
 
 def create_blank_img(dim):
-
     img = np.zeros(dim, dtype=np.uint8)
     img[:] = BACKGROUND_COLOUR
-
     return img
 
 
 # assumes square image
 def draw_lines(img, boarder, num_colours):
-
     min_space = 30
     thickness = 3
     h, w, _ = img.shape

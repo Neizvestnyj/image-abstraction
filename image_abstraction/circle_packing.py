@@ -1,5 +1,6 @@
 import math
 import random
+import cv2 as cv
 
 class Point:
     def __init__(self, x, y):
@@ -8,71 +9,128 @@ class Point:
 
 
 class Circle:
-    def __init__(self, center, radius, subcircles=None):
+    def __init__(self, center, radius, child_circles=None):
         self.center = center
         self.radius = radius
-        if subcircles is None:
-            subcircles = []
-        self.subcircles = subcircles
+        if child_circles is None:
+            child_circles = []
+        self.child_circles = child_circles
+
+    def draw_circle(self, image, parent_colour=(255, 255, 255),
+                    child_colour=(0, 0, 0), child_fill=False):
+        """Draws the circle passed as a parameter and all child circles
+        associated with its class attribute.
+
+        :param image: NumPy image on which the circles are to be drawn
+        :param colour: RGB tuple representing the outline colour of the
+            circles
+        :return: NumPy image with circles drawn on it
+        """
+        # Draw parent circle
+        cv.circle(image, (self.center.y, self.center.x), int(self.radius),
+                  parent_colour, thickness=-1, lineType=cv.LINE_AA)
+        if self.radius > 3:
+            thickness = -1 if child_fill else 1
+            for c in self.child_circles: # Draw child circles
+                cv.circle(image, (c.center.y, c.center.x), int(c.radius),
+                          child_colour, thickness=thickness, lineType=cv.LINE_AA)
+        return image
 
 
 def random_point(circle):
     """Generates uniformly random point within a circle"""
-    r = circle.radius * math.sqrt(random.random())
+    radius = circle.radius * math.sqrt(random.random())
     theta = random.random() * 2 * math.pi
 
     # Convert to cartesian coordinates
-    x = circle.center.x + r * math.cos(theta)
-    y = circle.center.y + r * math.sin(theta)
+    x = circle.center.x + radius * math.cos(theta)
+    y = circle.center.y + radius * math.sin(theta)
     return Point(int(x), int(y))
 
 
-def has_intersection(a, b, outside=True):
+def has_intersection(a, b, epsilon, outside=True):
     """Checks if the parimeter of two circles intersect or touch.
 
-    Args:
-        a: first circle object
-        b: second circle object
-        outside: boolean to indicate that circle a is inside of b
+    :param a: first circle object
+    :param b: second circle object
+    :param outside: boolean to indicate that circle a is inside of b
+    :return: True if intersection occurs
     """
-    distance = math.dist(a.center, b.center)
+    distance = math.dist((a.center.x, a.center.y),
+                         (b.center.x, b.center.y))
     if outside:
-        intersection_occurs = a.radius + b.radius >= distance
+        intersection_occurs = a.radius + b.radius >= distance - epsilon
     else: # a inside b
-        intersection_occurs = b.radius - a.radius <= distance
+        intersection_occurs = b.radius - a.radius <= distance + epsilon
     return intersection_occurs
 
 
-# Returns true if the radius of an inner circle can expand without intersecting
-# any existing circle or reaching the max radius allowed by user
-def can_expand(new_circle, outer_circle, max_radius):
-    """
-
-    :param new_circle:
-    :param outer_circle:
-    :param max_radius:
-    :return:
+def can_expand(new_circle, parent_circle, max_radius, gap=3):
+    """Checks if a circle's radius can be increased by 1 without
+    touching an edge of a pre-existing circle
     """
     is_not_max_size = new_circle.radius <= max_radius
-    for circle in outer_circle.subcircles:
-        intersects_circle = has_intersection(new_circle, circle)
+    intersects_circle = False
+    for circle in parent_circle.child_circles:
+        intersects_circle = has_intersection(new_circle, circle, epsilon=gap)
         if intersects_circle:
             break
-    intersects_outer_circle = has_intersection(new_circle, outer_circle,
-                                                 outside=False)
-    return is_not_max_size or intersects_circle or intersects_outer_circle
+    intersects_parent_circle = has_intersection(
+        new_circle, parent_circle, outside=False, epsilon=gap
+    )
+    intersection_occurs = intersects_circle or intersects_parent_circle
+    return is_not_max_size and not intersection_occurs
 
 
-# Packs circle with specified radius and center with smaller random circles
-def pack_circle(outer_circle, num_circles, max_radius):
+def pack_circle(parent_circle, num_circles, max_radius, min_radius=3):
+    """Fills the child_circles attribute of the parent_circle with
+    randomly placed circles.
+
+    :param parent_circle: Circle to be filled
+    :param num_circles: Number of randomly placed circles to fill the
+        parent circle
+    :param max_radius: The max radius a generated child circle can have
+    :return: Copy of parent_circle with filled child_circles attribute
+    """
+    max_attempts_reached = False
+    max_attempts = int(num_circles*0.75)
     for _ in range(num_circles):
+        attempt_count = 0
         while True:
-            center = random_point(outer_circle)
-            new_circle = Circle(center, radius=1)
-            keep_expanding = can_expand(new_circle, outer_circle, max_radius)
-            if keep_expanding:
+            center = random_point(parent_circle)
+            new_circle = Circle(center, radius=min_radius)
+            keep_expanding = can_expand(new_circle, parent_circle, max_radius)
+            if keep_expanding or max_attempts_reached:
                 break
+            attempt_count += 1
+            max_attempts_reached = attempt_count >= max_attempts
         while keep_expanding:
             new_circle.radius += 1
-            keep_expanding = can_expand(new_circle, outer_circle, max_radius)
-        outer_circle.subcircles.append(new_circle)
+            keep_expanding = can_expand(new_circle, parent_circle, max_radius)
+        if not max_attempts_reached:
+            parent_circle.child_circles.append(new_circle)
+    return parent_circle
+
+def draw_fractal(
+        img, circle, num_circles, max_radius, parent_colour,
+        child_colour, max_depth, curr_depth=0
+):
+    circle = pack_circle(circle, num_circles, circle.radius*max_radius)
+    img = circle.draw_circle(img, parent_colour, child_colour, child_fill=True)
+    curr_depth += 1
+    if curr_depth < max_depth:
+        for c in circle.child_circles:
+            num_circles -= num_circles * (c.radius / circle.radius)
+            draw_fractal(img, c, int(num_circles), c.radius*max_radius,
+                         parent_colour=child_colour,
+                         child_colour=parent_colour,
+                         max_depth=max_depth, curr_depth=curr_depth)
+    return img
+
+
+if __name__ == '__main__':  # Testing
+    from image_abstraction.test import test_circle_packing as test
+    #test.test_random_point(1000)
+    #test.test_draw_circle()
+    #test.test_pack_circle()
+    test.test_draw_fractal()
