@@ -2,6 +2,7 @@ import math
 import random
 import cv2 as cv
 
+
 class Point:
     def __init__(self, x, y):
         self.x = x
@@ -27,14 +28,36 @@ class Circle:
         :return: NumPy image with circles drawn on it
         """
         # Draw parent circle
+        if isinstance(parent_colour, dict):
+            parent_colour = select_random_colour(parent_colour)
         cv.circle(image, (self.center.y, self.center.x), int(self.radius),
                   parent_colour, thickness=-1, lineType=cv.LINE_AA)
-        if self.radius > 3:
+        if self.radius > 2:
+            if isinstance(child_colour, dict):
+                child_colour = select_random_colour(child_colour)
             thickness = -1 if child_fill else 1
             for c in self.child_circles: # Draw child circles
                 cv.circle(image, (c.center.y, c.center.x), int(c.radius),
-                          child_colour, thickness=thickness, lineType=cv.LINE_AA)
+                          child_colour, thickness=thickness,
+                          lineType=cv.LINE_AA)
         return image
+
+
+def select_random_colour(colours):
+    """Selects random colour from dict containing 3 tuple bgr keys and
+    integer count of pixels from image as values
+
+    :param colours: dict of colour-count pairs
+    :return: 3-tuple bgr value"""
+    # Convert dict values (pixel count) to probability
+    total_pixels = sum(colours.values())
+    for key, value in colours.items():
+        colours[key] = value / total_pixels
+    colour = random.choices(
+        list(colours.keys()), weights=colours.values(), k=1
+    )[0]
+    colour = (int(colour[0]), int(colour[1]), int(colour[2]))
+    return colour
 
 
 def random_point(circle):
@@ -53,6 +76,7 @@ def has_intersection(a, b, epsilon, outside=True):
 
     :param a: first circle object
     :param b: second circle object
+    :param epsilon: gap between circles
     :param outside: boolean to indicate that circle a is inside of b
     :return: True if intersection occurs
     """
@@ -90,6 +114,7 @@ def pack_circle(parent_circle, num_circles, max_radius, min_radius=3):
     :param num_circles: Number of randomly placed circles to fill the
         parent circle
     :param max_radius: The max radius a generated child circle can have
+    :param min_radius: The min radius a generated child circle can have
     :return: Copy of parent_circle with filled child_circles attribute
     """
     max_attempts_reached = False
@@ -111,6 +136,7 @@ def pack_circle(parent_circle, num_circles, max_radius, min_radius=3):
             parent_circle.child_circles.append(new_circle)
     return parent_circle
 
+
 def draw_fractal(
         img, circle, num_circles, max_radius, parent_colour,
         child_colour, max_depth, curr_depth=0
@@ -121,10 +147,11 @@ def draw_fractal(
     if curr_depth < max_depth:
         for c in circle.child_circles:
             num_circles -= num_circles * (c.radius / circle.radius)
-            draw_fractal(img, c, int(num_circles), c.radius*max_radius,
-                         parent_colour=child_colour,
-                         child_colour=parent_colour,
-                         max_depth=max_depth, curr_depth=curr_depth)
+            draw_fractal(
+                img, c, int(num_circles), c.radius*max_radius,
+                parent_colour=child_colour, child_colour=parent_colour,
+                max_depth=max_depth, curr_depth=curr_depth
+            )
     return img
 
 
@@ -133,4 +160,5 @@ if __name__ == '__main__':  # Testing
     #test.test_random_point(1000)
     #test.test_draw_circle()
     #test.test_pack_circle()
-    test.test_draw_fractal()
+    #test.test_draw_fractal()
+    test.test_draw_fractal_dict()

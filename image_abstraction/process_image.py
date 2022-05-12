@@ -1,6 +1,7 @@
 import numpy as np
 import cv2 as cv
 import logging
+from matplotlib import pyplot as plt
 from time import perf_counter
 
 logging.basicConfig(level=logging.INFO)
@@ -8,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 
 def load_image(file, max_dim):
     """Loads and resizes image from file"""
-    img = cv.imread(f'img/{file}')
+    img = cv.imread(f'data/{file}')
     logging.info(f'Image loaded with dimensions: {img.shape}')
     is_too_large = max(img.shape) > max_dim
     if is_too_large:
