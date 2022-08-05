@@ -36,7 +36,7 @@ class Circle:
             if isinstance(child_colour, dict):
                 child_colour = select_random_colour(child_colour)
             thickness = -1 if child_fill else 1
-            for c in self.child_circles: # Draw child circles
+            for c in self.child_circles:  # Draw child circles
                 cv.circle(image, (c.center.y, c.center.x), int(c.radius),
                           child_colour, thickness=thickness,
                           lineType=cv.LINE_AA)
@@ -84,7 +84,7 @@ def has_intersection(a, b, epsilon, outside=True):
                          (b.center.x, b.center.y))
     if outside:
         intersection_occurs = a.radius + b.radius >= distance - epsilon
-    else: # a inside b
+    else:  # a inside b
         intersection_occurs = b.radius - a.radius <= distance + epsilon
     return intersection_occurs
 
@@ -118,7 +118,7 @@ def pack_circle(parent_circle, num_circles, max_radius, min_radius=3):
     :return: Copy of parent_circle with filled child_circles attribute
     """
     max_attempts_reached = False
-    max_attempts = int(num_circles*0.75)
+    max_attempts = int(num_circles * 0.75)
     for _ in range(num_circles):
         attempt_count = 0
         while True:
@@ -141,14 +141,14 @@ def draw_fractal(
         img, circle, num_circles, max_radius, parent_colour,
         child_colour, max_depth, curr_depth=0
 ):
-    circle = pack_circle(circle, num_circles, circle.radius*max_radius)
+    circle = pack_circle(circle, num_circles, circle.radius * max_radius)
     img = circle.draw_circle(img, parent_colour, child_colour, child_fill=True)
     curr_depth += 1
     if curr_depth < max_depth:
         for c in circle.child_circles:
             num_circles -= num_circles * (c.radius / circle.radius)
             draw_fractal(
-                img, c, int(num_circles), c.radius*max_radius,
+                img, c, int(num_circles), c.radius * max_radius,
                 parent_colour=child_colour, child_colour=parent_colour,
                 max_depth=max_depth, curr_depth=curr_depth
             )
@@ -157,8 +157,9 @@ def draw_fractal(
 
 if __name__ == '__main__':  # Testing
     from image_abstraction.test import test_circle_packing as test
-    #test.test_random_point(1000)
-    #test.test_draw_circle()
-    #test.test_pack_circle()
-    #test.test_draw_fractal()
+
+    # test.test_random_point(1000)
+    # test.test_draw_circle()
+    # test.test_pack_circle()
+    # test.test_draw_fractal()
     test.test_draw_fractal_dict()

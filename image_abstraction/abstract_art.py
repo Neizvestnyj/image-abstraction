@@ -2,10 +2,6 @@ import numpy as np
 import cv2 as cv
 from random import randint, random
 import math
-from matplotlib import pyplot as plt
-import glob
-import logging
-from time import perf_counter
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -31,7 +27,6 @@ def draw_lines(img, boarder, num_colours):
     cv.rectangle(img, pt1=top_left, pt2=bottom_right, color=WHITE, thickness=thickness)
 
     for i in range(num_colours):
-
         left_edge = boarder_width + min_space
         right_edge = h - boarder_width - min_space
         random_col = randint(left_edge, right_edge)
@@ -44,9 +39,8 @@ def draw_lines(img, boarder, num_colours):
 
 
 def draw_circles(img, colours):
-
     h, w = img.shape[0:2]
-    center = (h/2, w/2)
+    center = (h / 2, w / 2)
     min_dim = min(h, w)
     outer_size = 0.8  # percent of total image dimension to be occupied by outer circle
     inner_size = 0.8  # percent of outer circle to fill with small circles
@@ -59,7 +53,6 @@ def draw_circles(img, colours):
     return_img = cv.circle(img, center=center, radius=outer_radius, color=WHITE, thickness=3)
 
     for colour, count in colours.items():
-
         colour_coverage = count / img.size  # percent of total pixels with specified colour
 
         # random angle from center of image

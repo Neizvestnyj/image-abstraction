@@ -16,7 +16,7 @@ def load_image(file, max_dim):
         h, w, _ = img.shape
 
         # scale image down to be within dimension constraint
-        scale = (max(img.shape)-max_dim) / max(img.shape)
+        scale = (max(img.shape) - max_dim) / max(img.shape)
         dim = (int(w * scale), int(h * scale))
         img = cv.resize(img, dim)
         logging.info(f'Image resized to dimensions: {img.shape}')
@@ -33,12 +33,12 @@ def quantize_img_colours(img, k):
     i = np.float32(img).reshape(-1, 3)
     condition = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 20, 1.0)
     _, label, center = cv.kmeans(i, k, None, condition, 10,
-                                   cv.KMEANS_RANDOM_CENTERS)
+                                 cv.KMEANS_RANDOM_CENTERS)
     center = np.uint8(center)
     final_img = center[label.flatten()]
     final_img = final_img.reshape(img.shape)
     end = perf_counter()
-    logging.info(f'Image quantized in {end-start} seconds')
+    logging.info(f'Image quantized in {end - start} seconds')
     return final_img
 
 
@@ -58,7 +58,7 @@ def get_colour_counts(img):
             else:
                 colours[colour] = 1
     end = perf_counter()
-    logging.info(f'Image pixels counted in {end-start} seconds')
+    logging.info(f'Image pixels counted in {end - start} seconds')
     return colours
 
 
