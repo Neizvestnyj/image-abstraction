@@ -2,6 +2,7 @@ from image_abstraction import abstract_art as abst, process_image as proc
 import cv2 as cv
 import argparse
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
