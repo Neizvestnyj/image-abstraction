@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 
 def load_image(file, max_dim):
     """Loads and resizes image from file"""
-    img = cv.imread(f'data/{file}')
+    img = cv.imread(file)
     logging.info(f'Image loaded with dimensions: {img.shape}')
     is_too_large = max(img.shape) > max_dim
     if is_too_large:
